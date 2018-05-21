@@ -1,10 +1,19 @@
 g++ test.cpp rate_limiter.cc -lpthread -std=c++14
 
-
+# 参考git
 
 https://github.com/mfycheng/ratelimiter
 
 https://github.com/jason860306/RateLimiter
+
+# 参考文档
+Guava官方文档-RateLimiter类
+https://blog.csdn.net/jiesa/article/details/52461703
+
+https://dzone.com/articles/ratelimiter-discovering-google
+接口限流算法总结
+http://www.kissyu.org/2016/08/13/%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/
+
 
 
 google java代码片段参考
