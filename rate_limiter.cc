@@ -6,7 +6,7 @@
 #include "rate_limiter.h"
 
 RateLimiter::RateLimiter()
-    : interval_(0), max_permits_(0), stored_permits_(0), next_free_(0) {
+    : stable_interval_micros_(0), max_permits_(0), stored_permits_(0), next_free_(0) {
 }
 long RateLimiter::aquire() {
     return aquire(1);
@@ -48,10 +48,10 @@ void RateLimiter::sync(unsigned long long now) {
     if (now > next_free_) {
         /**
          * 取当前令牌桶里的令牌数，不能大于令牌桶的容量
-         * (now - next_free_) / interval_: 时间段(now - next_free_)内新产生的令牌数
-         * stored_permits_ + (now - next_free_) / interval_: 当前令牌桶内剩余及新产生的令牌数
+         * (now - next_free_) / stable_interval_micros_: 时间段(now - next_free_)内新产生的令牌数
+         * stored_permits_ + (now - next_free_) / stable_interval_micros_: 当前令牌桶内剩余及新产生的令牌数
          */
-        stored_permits_ = std::min(max_permits_, stored_permits_ + (now - next_free_) / interval_);
+        stored_permits_ = std::min(max_permits_, stored_permits_ + (now - next_free_) / stable_interval_micros_);
         next_free_ = now; ///< 重置生成令牌的开始时间
     }
 }
@@ -74,7 +74,7 @@ std::chrono::microseconds RateLimiter::claim_next(double permits) {
 
     // In the general RateLimiter, stored permits have no wait time,
     // and thus we only have to wait for however many fresh permits we consume
-    long next_free = (long)(fresh * interval_); ///< 用令牌生成速率将不足的令牌数转换成时间戳
+    long next_free = (long)(fresh * stable_interval_micros_); ///< 用令牌生成速率将不足的令牌数转换成时间戳
 
     next_free_ += next_free;
     stored_permits_ -= stored; ///< 消耗掉stored个令牌
@@ -83,7 +83,7 @@ std::chrono::microseconds RateLimiter::claim_next(double permits) {
 }
 
 double RateLimiter::get_rate() const {
-    return 1000000.0 / interval_;
+    return 1000000.0 / stable_interval_micros_;
 }
 void RateLimiter::set_rate(double rate) {
     if (rate <= 0.0) {
@@ -92,9 +92,9 @@ void RateLimiter::set_rate(double rate) {
 
     /**
      * 生成令牌的速率单位值
-     * interval_: 秒/个
+     * stable_interval_micros_: microseconds/个
      * rate: 个/秒
      */
     std::lock_guard<std::mutex> lock(mut_);
-    interval_ = 1000000.0 / rate;
+    stable_interval_micros_ = 1000000.0 / rate;
 }
