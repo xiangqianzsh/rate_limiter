@@ -22,11 +22,11 @@ private:
     void sync(unsigned long long now);
     std::chrono::microseconds claim_next(double permits);
 private:
-    double interval_;               ///< �������Ƶ����ʣ������ٵ�����ֵ����λ����/��
-    double max_permits_;            ///< ����Ͱ����
-    double stored_permits_;         ///< ��ǰ����Ͱ�ڵ�������
+    double interval_;               ///< 生成令牌的速率，即限速的速率值，单位：秒/个
+    double max_permits_;            ///< 令牌桶容量
+    double stored_permits_;         ///< 当前令牌桶内的令牌数
 
-    unsigned long long next_free_;  ///< �������ƵĿ�ʼʱ��
+    unsigned long long next_free_;  ///< 生成令牌的开始时间
 
     std::mutex mut_;
 };

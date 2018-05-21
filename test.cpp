@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
-#include "rate_limiter.hpp"
+#include "rate_limiter.h"
 
 #define GET_TIME duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()
 #define TOLERANCE 0.001 // 0.1%
@@ -18,20 +18,8 @@ bool test_aquire() {
     // it happens in the expected time (with some tolerance)
     using namespace std::chrono;
 
-    RateLimiterInterface* limiter = new RateLimiter();
+    RateLimiter* limiter = new RateLimiter();
     limiter->set_rate(10);
-
-    // Make sure it checks inputs
-    bool exception_thrown = false;
-    try {
-        limiter->aquire(-1);
-    } catch (std::runtime_error ex) {
-        exception_thrown = true;
-    }
-
-    if (exception_thrown) {
-        return false;
-    }
 
     long long start = GET_TIME;
 
@@ -40,6 +28,7 @@ bool test_aquire() {
         limiter->aquire();
     }
 
+    limiter->aquire();  // should acquire again, to reach the end of time of the last aquire.
     long long end = GET_TIME;
 
     double error = ((end - start) - 2000) * 1.0 /  2000;
@@ -50,7 +39,7 @@ bool test_aquire_multiple_permits() {
     // Similar to the basic test, but with various sized permits
     using namespace std::chrono;
 
-    RateLimiterInterface* limiter = new RateLimiter();
+    RateLimiter* limiter = new RateLimiter();
     limiter->set_rate(0.5);
 
     long long start = GET_TIME;
@@ -71,20 +60,8 @@ bool test_aquire_multiple_permits() {
 bool test_try_aquire() {
     using namespace std::chrono;
 
-    RateLimiterInterface* limiter = new RateLimiter();
+    RateLimiter* limiter = new RateLimiter();
     limiter->set_rate(0.5);
-
-    // Make sure it checks inputs
-    bool exception_thrown = false;
-    try {
-        limiter->try_aquire(-1);
-    } catch (std::runtime_error ex) {
-        exception_thrown = true;
-    }
-
-    if (exception_thrown) {
-        return false;
-    }
 
     long long start = GET_TIME;
 
@@ -113,7 +90,7 @@ bool test_try_aquire() {
 bool test_rate() {
     using namespace std::chrono;
 
-    RateLimiterInterface* limiter = new RateLimiter();
+    RateLimiter* limiter = new RateLimiter();
 
     // Initial test. Set rate to 1.0, measure
     limiter->set_rate(1);
@@ -164,7 +141,7 @@ bool test_concurrent() {
     // REALLY long wait.
     using namespace std::chrono;
 
-    RateLimiterInterface* limiter = new RateLimiter();
+    RateLimiter* limiter = new RateLimiter();
     limiter->set_rate(100.0);
 
     // We use futures, so we can make sure every task finishes.
@@ -203,17 +180,18 @@ int main() {
     using namespace std;
     using namespace std::chrono;
 
-    RateLimiterInterface* limiter = new RateLimiter();
-    limiter->set_rate(2);
+    // RateLimiter* limiter = new RateLimiter();
+    // limiter->set_rate(2);
 
-    for (int i = 0; i < 1000; i++)
-    {
-        long token_num = limiter->aquire();
-        printf("%04d. token %04ld: %llu\n", i, token_num, GET_TIME);
-    }
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     long token_num = limiter->aquire();
+    //     printf("%04d. token %04ld: %llu\n", i, token_num, GET_TIME);
+    // }
 
     int failed = 0;
-#if 0
+
+
     int num = sizeof(tests) / sizeof(Test);
     for (int i = 0; i < num; i++) {
         cout << "Running Test: " << tests[i].name << "...";
@@ -228,7 +206,6 @@ int main() {
 
         cout << endl;
     }
-#endif
     
     return failed;
 }
